@@ -8,6 +8,7 @@ import { getBundles } from 'react-loadable/webpack';
 import stats from './dist/react-loadable.json';
 import path from 'path';
 import Routes from './router/Routes';
+const expressStaticGzip = require('express-static-gzip');
 
 const app = express();
 const port = 3001;
