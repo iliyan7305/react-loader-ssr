@@ -1,23 +1,34 @@
 import express from 'express';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import App from './components/App';
+import { StaticRouter } from 'react-router-dom'
+import { renderRoutes } from 'react-router-config'
 import Loadable from 'react-loadable';
 import { getBundles } from 'react-loadable/webpack';
 import stats from './dist/react-loadable.json';
 import path from 'path';
+import Routes from './router/Routes';
 
 const app = express();
 const port = 3001;
 
-app.use(express.static('dist'))
+app.use('/dist', express.static('dist'));
 
-app.get('/', (req,res) => {
+app.use((req, res, next) => {
+    if (/\.js|\.css/.test(req.path) && !/dist/.test(req.path)) {
+        res.redirect('/dist' + req.path);
+    } else {
+        next();
+    }
+});
+
+app.get('*', (req,res) => { 
     let modules = [];
-
     let html = ReactDOMServer.renderToString(
         <Loadable.Capture report={moduleName => modules.push(moduleName)}>
-            <App/>
+            <StaticRouter location={req.path} >
+                <div>{renderRoutes(Routes)}</div>
+            </StaticRouter>
         </Loadable.Capture>
     )
 
@@ -40,10 +51,10 @@ app.get('/', (req,res) => {
             </head>
             <body>
                 <div id="app">${html}</div>
-                <script src="manifest.js"></script>
-                <script src="main.js"></script>
+                <script src="/dist/manifest.js"></script>
+                <script src="/dist/main.js"></script>
                 ${scripts.map(script => {
-                    return `<script src="${script.file}"></script>`
+                    return `<script src="/dist/${script.file}"></script>`
                 }).join('\n')}
                 <script>window.main();</script>
             </body>
